@@ -24,7 +24,7 @@ jobs:
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan /app/toucan generate /data/src /data/docs
+            toucansites/toucan generate /data/src /data/docs
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
