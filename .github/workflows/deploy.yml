@@ -19,7 +19,7 @@ jobs:
       - name: Build site using Toucan
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/data \
+            -v ${{ github.workspace }}:/tmp \
             -w /tmp \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
