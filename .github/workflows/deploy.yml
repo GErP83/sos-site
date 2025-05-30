@@ -16,19 +16,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Make workspace writable by container
-        run: sudo chown -R 1000:1000 ${{ github.workspace }}
-
       - name: Build site using Toucan
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/site \
-            -w /site \
-            --user $(id -u):$(id -g) \
+            -v ${{ github.workspace }}:/data \
+            -w /tmp \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan generate ./src ./docs
+            toucansites/toucan /app/toucan generate /data/src /data/docs
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
