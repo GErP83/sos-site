@@ -24,6 +24,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/site \
             -w /site \
+            --user $(id -u):$(id -g) \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
