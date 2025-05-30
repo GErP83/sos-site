@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Make workspace writable by container
+        run: sudo chown -R 1000:1000 ${{ github.workspace }}
+
       - name: Build site using Toucan
         run: |
           docker run --rm \
