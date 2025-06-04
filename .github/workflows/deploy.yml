@@ -1,0 +1,65 @@
+name: Build and Deploy with Toucan
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SWIFTINIT_ACCOUNT }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_ACCOUNT"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_API_KEY }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_API_KEY"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_TARGET }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_TARGET"
+            exit 1
+          fi
+          echo "✅ All required secrets are present."
+
+      - name: Create writable cache directory
+        run: |
+          mkdir -p ./cache
+          chmod 777 ./cache
+
+      - name: Build site using Toucan
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/site \
+            -v ${{ github.workspace }}/cache:/site/cache \
+            -w /site \
+            -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
+            -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
+            -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
+            toucansites/toucan generate ./src ./docs
+      
+      - name: Upload static site to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy-page:
+    needs: build-page
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
