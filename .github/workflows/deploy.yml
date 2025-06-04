@@ -32,41 +32,30 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: Create bind-mounted cache directory
+      - name: Prepare output and cache directories
         run: |
-          mkdir -p ./cache
-          chmod -R 777 ./cache
-
-      - name: Create Docker volume for docs
-        run: docker volume create toucan-docs
-
-      - name: Empty the /site/docs volume
-        run: |
-          docker run --rm --user root \
-            --mount type=volume,source=toucan-docs,target=/site/docs \
-            busybox sh -c "rm -rf /site/docs/*"
+          mkdir -p ./.toucan-out ./cache
+          chmod -R 777 ./.toucan-out ./cache
 
       - name: Build site using Toucan
         run: |
           docker run --rm \
             --mount type=bind,source=${{ github.workspace }},target=/site \
-            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
-            --mount type=volume,source=toucan-docs,target=/out-volume \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan /bin/sh -c "\
-              mkdir -p ./docs && \
-              toucan generate ./src ./docs && \
-              cp -r ./docs/. /out-volume/"
+            toucansites/toucan generate ./src ./.toucan-out
 
-      - name: Copy built site from volume to ./docs
+      - name: Copy output to ./docs
         run: |
-          mkdir -p ./docs
-          CONTAINER_ID=$(docker create --mount type=volume,source=toucan-docs,target=/data busybox)
-          docker cp $CONTAINER_ID:/data/. ./docs
-          docker rm $CONTAINER_ID
+          rm -rf ./docs
+          cp -r ./.toucan-out ./docs
+
+      - name: Upload static site to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
 
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
