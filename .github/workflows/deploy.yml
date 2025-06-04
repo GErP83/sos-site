@@ -40,9 +40,9 @@ jobs:
       - name: Build site using Toucan
         run: |
           docker run --rm \
-            --mount type=bind,source=${{ github.workspace }},target=/site \
-            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
-            --mount type=bind,source=${{ github.workspace }}/docs,target=/site/docs \
+            --mount type=volume,source=${{ github.workspace }},target=/site \
+            --mount type=volume,source=${{ github.workspace }}/cache,target=/site/cache \
+            --mount type=volume,source=${{ github.workspace }}/docs,target=/site/docs \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
