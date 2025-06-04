@@ -18,44 +18,27 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          if [ -z "${{ secrets.SWIFTINIT_ACCOUNT }}" ]; then
-            echo "❌ Missing secret: SWIFTINIT_ACCOUNT"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SWIFTINIT_API_KEY }}" ]; then
-            echo "❌ Missing secret: SWIFTINIT_API_KEY"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SWIFTINIT_TARGET }}" ]; then
-            echo "❌ Missing secret: SWIFTINIT_TARGET"
-            exit 1
-          fi
+          for var in SWIFTINIT_ACCOUNT SWIFTINIT_API_KEY SWIFTINIT_TARGET; do
+            if [ -z "${{ secrets[$var] }}" ]; then
+              echo "❌ Missing secret: $var"
+              exit 1
+            fi
+          done
           echo "✅ All required secrets are present."
 
-      - name: Prepare cache directory
+      - name: Create bind-mounted cache directory
         run: |
-          mkdir -p ./cache ./cache/swiftinit ./cache/newsletter
-          chmod -R 777 ./cache ./cache/swiftinit ./cache/newsletter
+          mkdir -p ./cache
+          chmod -R 777 ./cache
 
-
-      - name: Create Docker volumes
-        run: |
-          docker volume create toucan-cache
-          docker volume create toucan-docs
-
-      - name: Fix permissions on /site/cache and /site/docs
-        run: |
-          docker run --rm --user root \
-            --mount type=volume,source=toucan-cache,target=/site/cache \
-            --mount type=volume,source=toucan-docs,target=/site/docs \
-            busybox sh -c "chown -R 1000:1000 /site/cache /site/docs"
-            
+      - name: Create Docker volume for docs
+        run: docker volume create toucan-docs
 
       - name: Build site using Toucan
         run: |
           docker run --rm \
             --mount type=bind,source=${{ github.workspace }},target=/site \
-            --mount type=volume,source=toucan-cache,target=/site/cache \
+            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
             --mount type=volume,source=toucan-docs,target=/site/docs \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
@@ -74,7 +57,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
-
 
   deploy-page:
     needs: build-page
