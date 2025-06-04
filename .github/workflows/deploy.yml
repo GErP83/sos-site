@@ -49,6 +49,11 @@ jobs:
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
             toucansites/toucan generate ./src ./docs/output
 
+      - name: Fix permissions on docs/output
+        run: |
+          chmod -R a+r ./docs/output
+          find ./docs/output -type d -exec chmod a+rx {} +
+
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
