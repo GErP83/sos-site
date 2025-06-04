@@ -1,4 +1,5 @@
-baseUrl: "https://swiftonserver.com/"
+#baseUrl: "https://swiftonserver.com/"
+baseUrl: "https://gerp83.github.io/sos-site/"
 locale: "en-US"
 title: "Swift on server"
 navigation:

@@ -1,0 +1,85 @@
+name: Build and Deploy with Toucan
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-page:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v4
+
+      - name: Get latest release or pre-release tag
+        id: get_latest_tag
+        run: |
+          tag=$(curl -s https://api.github.com/repos/toucansites/toucan/releases \
+            | jq -r 'sort_by(.created_at) | reverse | .[0].tag_name')
+          echo "Latest tag: $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Download Toucan .deb
+        run: |
+          TAG=${{ steps.get_latest_tag.outputs.tag }}
+          FILE="toucan-linux-amd64-${TAG//-/.}.deb"
+          URL="https://github.com/toucansites/toucan/releases/download/$TAG/$FILE"
+          echo "Downloading: $URL"
+          curl -L -o toucan.deb "$URL"
+
+      - name: Install Toucan
+        run: |
+          sudo dpkg -i toucan.deb || true
+          if ! command -v toucan &> /dev/null; then
+            mkdir -p extracted
+            dpkg-deb -x toucan.deb extracted
+            sudo cp extracted/usr/bin/toucan* /usr/local/bin/
+            sudo chmod +x /usr/local/bin/toucan*
+          fi
+
+      - name: Confirm Toucan is available
+        run: toucan --version
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SWIFTINIT_ACCOUNT }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_ACCOUNT"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_API_KEY }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_API_KEY"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_TARGET }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_TARGET"
+            exit 1
+          fi
+          echo "✅ All required secrets are present."
+
+      - name: Generate site
+        run: toucan generate ./src ./docs
+        env:
+          SWIFTINIT_ACCOUNT: ${{ secrets.SWIFTINIT_ACCOUNT }}
+          SWIFTINIT_API_KEY: ${{ secrets.SWIFTINIT_API_KEY }}
+          SWIFTINIT_TARGET: ${{ secrets.SWIFTINIT_TARGET }}
+
+      - name: Upload static site to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy-page:
+    needs: build-page
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
