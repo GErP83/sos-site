@@ -32,6 +32,11 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
+      - name: Prepare cache directory
+        run: |
+          mkdir -p ./cache ./cache/swiftinit ./cache/newsletter
+          chmod -R 777 ./cache ./cache/swiftinit ./cache/newsletter
+
       - name: Create Docker volumes
         run: |
           docker volume create toucan-cache
@@ -67,6 +72,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
+
 
   deploy-page:
     needs: build-page
