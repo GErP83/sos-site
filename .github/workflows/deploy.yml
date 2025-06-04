@@ -32,16 +32,17 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: Create writable cache directory
+      - name: Create writable cache and docs directories
         run: |
-          mkdir -p ./cache
-          chmod 777 ./cache
+          mkdir -p ./cache ./docs
+          chmod 777 ./cache ./docs
 
       - name: Build site using Toucan
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/site \
-            -v ${{ github.workspace }}/cache:/site/cache \
+            --mount type=bind,source=${{ github.workspace }},target=/site \
+            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
+            --mount type=bind,source=${{ github.workspace }}/docs,target=/site/docs \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
