@@ -18,12 +18,18 @@ jobs:
 
       - name: Validate required secrets
         run: |
-          for var in SWIFTINIT_ACCOUNT SWIFTINIT_API_KEY SWIFTINIT_TARGET; do
-            if [ -z "${{ secrets[$var] }}" ]; then
-              echo "❌ Missing secret: $var"
-              exit 1
-            fi
-          done
+          if [ -z "${{ secrets.SWIFTINIT_ACCOUNT }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_ACCOUNT"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_API_KEY }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_API_KEY"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SWIFTINIT_TARGET }}" ]; then
+            echo "❌ Missing secret: SWIFTINIT_TARGET"
+            exit 1
+          fi
           echo "✅ All required secrets are present."
 
       - name: Create bind-mounted cache directory
