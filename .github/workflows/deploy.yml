@@ -51,12 +51,12 @@ jobs:
           docker run --rm \
             --mount type=bind,source=${{ github.workspace }},target=/site \
             --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
-            --mount type=volume,source=toucan-docs,target=/site/docs \
+            --mount type=volume,source=toucan-docs,target=/site/.docs-out \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan generate ./src ./docs
+            toucansites/toucan generate ./src ./.docs-out
 
       - name: Copy built site from volume to ./docs
         run: |
