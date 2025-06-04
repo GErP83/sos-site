@@ -33,7 +33,9 @@ jobs:
           echo "✅ All required secrets are present."
 
       - name: Prepare cache directory
-        run: mkdir -p ./cache
+        run: |
+          mkdir -p ./cache ./cache/swiftinit ./cache/newsletter
+          chmod -R 777 ./cache ./cache/swiftinit ./cache/newsletter
 
       - name: Create volume for output
         run: docker volume create toucan-docs
