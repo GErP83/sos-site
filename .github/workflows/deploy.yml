@@ -32,13 +32,17 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: Prepare cache directory
+      - name: Create Docker volumes
         run: |
-          mkdir -p ./cache ./cache/swiftinit ./cache/newsletter
-          chmod -R 777 ./cache ./cache/swiftinit ./cache/newsletter
+          docker volume create toucan-cache
+          docker volume create toucan-docs
 
-      - name: Create volume for output
-        run: docker volume create toucan-docs
+      - name: Fix permissions on /site/cache and /site/docs
+        run: |
+          docker run --rm --user root \
+            --mount type=volume,source=toucan-cache,target=/site/cache \
+            --mount type=volume,source=toucan-docs,target=/site/docs \
+            busybox sh -c "chown -R 1000:1000 /site/cache /site/docs"
 
       - name: Build site using Toucan
         run: |
@@ -50,9 +54,9 @@ jobs:
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan /bin/bash -c "chown -R \$(id -u):\$(id -g) /site/docs && toucan generate ./src ./docs"
+            toucansites/toucan generate ./src ./docs
 
-      - name: Copy built site from volume to local ./docs
+      - name: Copy built site from volume to ./docs
         run: |
           mkdir -p ./docs
           CONTAINER_ID=$(docker create --mount type=volume,source=toucan-docs,target=/data busybox)
@@ -63,7 +67,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
-
 
   deploy-page:
     needs: build-page
