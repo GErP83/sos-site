@@ -32,23 +32,31 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: Create writable cache and docs directories
-        run: |
-          mkdir -p ./cache ./docs
-          chmod 777 ./cache ./docs
+      - name: Prepare cache directory
+        run: mkdir -p ./cache
+
+      - name: Create volume for output
+        run: docker volume create toucan-docs
 
       - name: Build site using Toucan
         run: |
           docker run --rm \
-            --mount type=volume,source=${{ github.workspace }},target=/site \
-            --mount type=volume,source=${{ github.workspace }}/cache,target=/site/cache \
-            --mount type=volume,source=${{ github.workspace }}/docs,target=/site/docs \
+            --mount type=bind,source=${{ github.workspace }},target=/site \
+            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
+            --mount type=volume,source=toucan-docs,target=/site/docs \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
             toucansites/toucan generate ./src ./docs
-                  
+
+      - name: Copy built site from volume to local ./docs
+        run: |
+          mkdir -p ./docs
+          CONTAINER_ID=$(docker create --mount type=volume,source=toucan-docs,target=/data busybox)
+          docker cp $CONTAINER_ID:/data/. ./docs
+          docker rm $CONTAINER_ID
+
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
