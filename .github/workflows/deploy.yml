@@ -36,8 +36,8 @@ jobs:
         run: |
           mkdir -p ./cache
           chmod -R 777 ./cache
-          rm -rf ./docs/output || true
-          mkdir -p ./docs/output
+          mkdir -p ./docs
+          chmod -R 777 ./docs
 
       - name: Run Toucan container and build site
         run: |
@@ -55,13 +55,13 @@ jobs:
 
       - name: Copy generated site from container to host
         run: |
-          docker cp toucan-build:/tmp/output/. ./docs/output
+          docker cp toucan-build:/tmp/output/. ./docs
           docker rm toucan-build
 
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs/output
+          path: ./docs
 
   deploy-page:
     needs: build-page
