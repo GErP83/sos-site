@@ -32,35 +32,27 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: Prepare output and cache directories
+      - name: Prepare cache and docs directories
         run: |
-          mkdir -p ./.toucan-out ./cache
-          chmod -R 777 ./.toucan-out ./cache
+          mkdir -p ./cache
+          mkdir -p ./docs/output
+          chmod -R 777 ./cache ./docs
 
       - name: Build site using Toucan
         run: |
           docker run --rm \
             --mount type=bind,source=${{ github.workspace }},target=/site \
+            --mount type=bind,source=${{ github.workspace }}/cache,target=/site/cache \
             -w /site \
             -e SWIFTINIT_ACCOUNT=${{ secrets.SWIFTINIT_ACCOUNT }} \
             -e SWIFTINIT_API_KEY=${{ secrets.SWIFTINIT_API_KEY }} \
             -e SWIFTINIT_TARGET=${{ secrets.SWIFTINIT_TARGET }} \
-            toucansites/toucan generate ./src ./.toucan-out
-
-      - name: Copy output to ./docs
-        run: |
-          rm -rf ./docs
-          cp -r ./.toucan-out ./docs
+            toucansites/toucan generate ./src ./docs/output
 
       - name: Upload static site to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./docs
-
-      - name: Upload static site to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./docs
+          path: ./docs/output
 
   deploy-page:
     needs: build-page
