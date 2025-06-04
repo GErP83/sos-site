@@ -37,6 +37,7 @@ jobs:
           mkdir -p ./cache ./cache/swiftinit ./cache/newsletter
           chmod -R 777 ./cache ./cache/swiftinit ./cache/newsletter
 
+
       - name: Create Docker volumes
         run: |
           docker volume create toucan-cache
