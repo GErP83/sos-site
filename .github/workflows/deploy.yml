@@ -36,8 +36,8 @@ jobs:
         run: |
           mkdir -p ./cache
           chmod -R 777 ./cache
-          mkdir -p ./docs
-          chmod -R 777 ./docs
+          mkdir -p ./dist
+          chmod -R 777 ./dist
 
       - name: Run Toucan container and build site
         run: |
@@ -57,7 +57,7 @@ jobs:
 
       - name: Copy generated site from container to host
         run: |
-          docker cp toucan-build:/tmp/output/. ./docs
+          docker cp toucan-build:/tmp/output/. ./dist
           docker rm toucan-build
 
       - name: Upload static site to GitHub Pages
